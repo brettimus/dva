@@ -4,47 +4,70 @@
 
 ## Data Flow
 
+dva borrows its ideas on [data flow](http://redux.js.org/docs/basics/DataFlow.html) from Redux.
+
 <img src="https://zos.alipayobjects.com/rmsportal/PPrerEAKbIoDZYr.png" width="807" />
 
 ## Models
 
 ### State
 
-`type State = any`
+```ts
+type State = any
+```
 
-The state tree of your models. Usually, the state is a javascript object(Technically it can be any type), which is a immutable data.
+The state tree of your models is held inside the [store](http://redux.js.org/docs/basics/Store.html). Usually, the state tree is a javascript object; though, it can be of any type. It should be treated like it is immutable—you should never modify the state tree directly!
 
-In dva, you can access top state tree data by `_store`.
+In dva, you can access your app's store with the `._store` property. You can access the state tree by calling `._store.getState()`.
 
 ```javascript
 const app = dva();
-console.log(app._store); // top state
+// ...
+console.log(app._store); // Logs your application state tree
+console.log(app._store.getState()); // Logs the application state tree
 ```
 
 ### Action
 
-`type AsyncAction = any`
+```ts
+type AsyncAction = any
+```
 
-Just like Redux's Action, in dva, action is a plain object that represents an intention to change the state. Actions are the only way to get data into the store. Any data, whether from UI events, network callbacks, or other sources such as WebSockets needs to eventually be dispatched as actions.action.(ps:dispatch is realized through props by connecting components.)
+Just like [Redux's actions](http://redux.js.org/docs/basics/Actions.html), an action in dva is a plain object that represents a proposed change to the application's state. In fact, actions are *the only way* to ensure that changes to data in the state tree propagated to the user interface. 
+
+Any data you want to add to your store, whether it's from UI events, http requests, or other sources (e.g., WebSockets), needs to be dispatched inside an action and handled by a reducer.
+
+Note that actions must have a `type` field, and may also contain additional data that reducers use to update the state tree. The convention in these docs is to put additional data inside a property called `payload`. 
+
+> :cyclone: *If you're confused by the terms `dispatch` and `reducer`, read the following sections!*
 
 ```javascript
+const optionalData = {};
+# The `dispatch` function (described below) is how we tell the state tree that we want it to change
 dispatch({
   type: 'add',
+  payload: optionalData,
 });
 ```
 
 ### dispatch function
 
-`type dispatch = (a: Action) => Action`
+```ts
+type dispatch = (a: Action) => Action
+```
 
-A dispatching function (or simply dispatch function) is a function that accepts an action or an async action; it then may or may not dispatch one or more actions to the store.
+The dispatch function accepts an action or a representation of an asynchronous action. It helps communicate to reducers (described below) that the state tree should be changed. 
 
-Dispatching function is a function for triggering action, action is the only way to change state, but it just describes an action. while dispatch can be regarded as a way to trigger this action, and Reducer is to describe how to change state.
+So, 
+
+The dispatch function is a function for triggering action, action is the only way to change state, but it just describes an action. while dispatch can be regarded as a way to trigger this action, and Reducer is to describe how to change state.
 
 ```javascript
+const optionalData = {};
 dispatch({
-  type: 'user/add', // if in model outside, need to add namespace
-  payload: {},
+  type: 'user/add', // if dispatched outside of a model,
+                    // the `type` field needs to include the model's namespace
+  payload: optionalData,
 });
 ```
 
@@ -52,35 +75,73 @@ dispatch({
 
 `type Reducer<S, A> = (state: S, action: A) => S`
 
-Just like Redux's Reducer, a reducer (also called a reducing function) is a function that accepts an accumulation and a value and returns a new accumulation. They are used to reduce a collection of values down to a single value.
+[Just like in Redux](http://redux.js.org/docs/basics/Reducers.html), a reducer (also called a reducing function) is a function that accepts the current state of the application and an action, then returns *a new copy* of the state of the application.
 
-Reducer's concepts from FP:
+In dva, reducers *immutably* change a model's state. **Importantly**, each reducer must
 
-```javascript
-[{x:1},{y:2},{z:3}].reduce(function(prev, next){
-    return Object.assign(prev, next);
-})
-//return {x:1, y:2, z:3}
+  1. Be a [pure function](https://github.com/MostlyAdequate/mostly-adequate-guide/blob/master/ch3.md)
+  2. Treat its state argument as [immutable data](https://github.com/MostlyAdequate/mostly-adequate-guide/blob/master/ch3.md#reasonable).
+
+```js
+// some-model.js
+export default {
+// ...
+  reducers: {
+    add(state, action) {
+      return {
+        ...state,
+        count: action.payload.count,
+      }
+    }
+  }
+  // ...
+}
 ```
 
-In dva, reducers accumulate current model's state. There are some things need to be notice that reducer must be [pure function](https://github.com/MostlyAdequate/mostly-adequate-guide/blob/master/ch3.md) and every calculated data must be [immutable data](https://github.com/MostlyAdequate/mostly-adequate-guide/blob/master/ch3.md#reasonable).
+#### Background
+
+The term "reducer" comes from functional programming, where it is defined as a function that takes an accumulation and a value and returns a new accumulation. Reducers are typically are used to "reduce" a collection of values down to a single value. For example,
+
+```javascript
+// a collection of objects with different properties
+const collection = [{ x: 1 }, { y: 2 }, { z: 3 }]
+// a reducer function that talk all the proprties of objects in a collection,
+// and combines them into a new object
+const reducer = (accumulation, value) => Object.assign(accumulation, value)
+const singleValue = collection.reduce(reducer, {} /* this is the initial value for `accumulation` */)
+console.log(singleValue)
+// => { x: 1, y: 2, z: 3 }
+```
 
 ### Effect
 
-In dva, we use [redux-sagas](http://yelouafi.github.io/redux-saga/) to control asynchronous flow.
-You can learn more in [Mostly adequate guide to FP](https://github.com/MostlyAdequate/mostly-adequate-guide).
+dva uses [redux-saga](http://yelouafi.github.io/redux-saga/) to control asynchronous (or any potentially side-effecting) data flow, like network calls to an api. It is recommended that you read the [redux-saga documentation](https://redux-saga.js.org/docs/introduction/BeginnerTutorial.html) to understand how to use effects. After that, read the [dva api docs on effects](https://github.com/dvajs/dva/blob/master/docs/API.md#effects).
 
-In our applications, the most well-known side effect is asynchronous operation, it comes from the conception of functional programing, it is called side effect because it makes our function impure, and the same input may not result in the same output.
+
+#### Background
+
+"Effect" is another term that comes from functional programming. (Learn more about effects in the [Mostly adequate guide to Functional Programming](https://github.com/MostlyAdequate/mostly-adequate-guide/blob/master/ch3.md#side-effects-may-include).)
+
+Side-effects make a function impure, meaning the same input may not result in the same output. Thus, side-effects make functions difficult to test. In dva applications, the most common type of side effect is an asynchronous operation.
+
 
 ### Subscription
 
-Subscriptions is a way to get data from source, it is come from elm.
+Subscriptions are a way to set a model's state from a source that could emit data at any point of time. Essentially, they *listen* for data. (This concept comes from [Elm](https://guide.elm-lang.org/architecture/effects/time.html).)
 
-Data source can be: the current time, the websocket connection of server, keyboard input, geolocation change, history router change, etc..
+These data sources may include, but are not limited to:
+
+  * keyboard input
+  * history router change
+  * the current time
+  * a websocket connection
+  * geolocation change
+  * etc...
+
 
 ```javascript
 import key from 'keymaster';
-...
+//...
 app.model({
   namespace: 'count',
   subscriptions: {
@@ -93,24 +154,25 @@ app.model({
 
 ## Router
 
-Hereby router usually means frontend router. Because our current app is single page app, frontend codes are required to control the router logics. Through History API provided by the browser, we can monitor the change of the browser's url, so as to control the router.
+Here, "router" means "frontend router." Because dva is designed with single page applications in mind, there is extra code required on the frontend to control changes to the URL and overall routing logic. Through the History API provided by the browser, we can change the url of the application without refreshing the page and, perhaps most importantly, without breaking the back button.
 
-dva provide `router` function to control router, based on [react-router](https://github.com/reactjs/react-router)。
+dva provides a `router` function that accepts a stateless router component. Under the hood, it uses [react-router version 2](https://github.com/ReactTraining/react-router/tree/v2.8.1).
 
-```javascript
+```jsx
 import { Router, Route } from 'dva/router';
-app.router(({history}) =>
+app.router(({history}) => (
   <Router history={history}>
     <Route path="/" component={HomePage} />
   </Router>
 );
 ```
 
-## Route Components
+### Route Components
 
-In dva, we restrict container components to route components, because we use page dimension to design container components.
+dva makes it easy to use the [presentational and container components](https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0) pattern common amongst React applications.
 
-therefore, almost all connected model components are route components, route components in `/routes/` directory, presentational Components in `/components/` directory.
+It's helpful to think of most of the app's container components as route components (that is, fed to a `Route` component. These route components are placed inside the `routes/` directory and passed to `Route`s in the main `Router` (see above). Accordinginly, the majority of components in the `components/` directory should be presentational, though this is not a strict rule.
+
 
 ## References
 - [redux docs](http://redux.js.org/docs/Glossary.html)
