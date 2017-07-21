@@ -5,17 +5,17 @@
 ## Export Files
 ### dva
 
-Default export file.
+Default export. A factory function for creating dva apps.
 
 ### dva/mobile
 
-`dva/mobile` is the dva without router, should be used in multiple-page app, react-native, and so on.
+`dva/mobile` is dva without the router, which should be used in multiple-page or react-native apps.
 
 ### dva/router
 
-Export the api of [react-router@2.x](https://github.com/ReactTraining/react-router/tree/v2.8.1), and also export [react-router-redux](https://github.com/reactjs/react-router-redux) with the `routerRedux` key.
+Exports the api of [react-router@2.x](https://github.com/ReactTraining/react-router/tree/v2.8.1), and also exports [react-router-redux](https://github.com/reactjs/react-router-redux) with the `routerRedux` key.
 
-e.g.
+E.g.,
 
 ```js
 import { Router, Route, routerRedux } from 'dva/router';
@@ -23,23 +23,23 @@ import { Router, Route, routerRedux } from 'dva/router';
 
 ### dva/fetch
 
-Async request library, export the api of [isomorphic-fetch](https://github.com/matthew-andrews/isomorphic-fetch). It's just for convenience, you can choose other libraries for free.
+Exports the api of [isomorphic-fetch](https://github.com/matthew-andrews/isomorphic-fetch), which can be used for async network requests. This is included solely for convenience. (That is, you can choose to use whatever request library you want.)
 
 ### dva/saga
 
-Export the api of [redux-saga](https://github.com/yelouafi/redux-saga).
+Exports the api of [redux-saga](https://github.com/yelouafi/redux-saga).
 
 ## dva API
 ### `app = dva(opts)`
 
-Create app, and return dva instance. (Notice: dva support multiple instances.)
+Create an app and return dva instance. (Note: dva supports multiple instances.)
 
 `opts` includes:
 
-* `history`: Specify the history for router, default `hashHistory`
-* `initialState`: Specify the initial state, default `{}`, it's priority is higher then model state
+* `history`: Specify the history for router (default `hashHistory`).
+* `initialState`: Specify the initial state (default `{}`). Its priority is higher than model state
 
-e.g. use `browserHistory`:
+E.g., to use `browserHistory`:
 
 ```js
 import { browserHistory } from 'dva/router';
@@ -48,7 +48,7 @@ const app = dva({
 });
 ```
 
-Besides, for convenience, we can configure [hooks](#appusehooks) in `opts`, like this:
+Additionally, for convenience, `opts` also accepts [hooks](#appusehooks):
 
 ```js
 const app = dva({
@@ -67,13 +67,13 @@ const app = dva({
 
 ### `app.use(hooks)`
 
-Specify hooks or register plugin. (Plugin return hooks finally.)
+Specify hooks or register a plugin.
 
-e.g. register [dva-loading](https://github.com/dvajs/dva-loading) plugin:
+E.g., to register the [dva-loading](https://github.com/dvajs/dva-loading) plugin:
 
 ```js
 import createLoading from 'dva-loading';
-...
+// ...
 app.use(createLoading(opts));
 ```
 
@@ -81,9 +81,7 @@ app.use(createLoading(opts));
 
 #### `onError(fn, dispatch)`
 
-Triggered when `effect` has error or `subscription` throw error with `done`. Used for managing global error.
-
-Notice: `subscription`'s error must be throw with the send argument `done`. e.g.
+Triggered when `effect` has error or `subscription` throw error with `done`. Useful for capturing and handling unhandled errors from effects, though note for subscription`s, errors must be thrown with the send argument `done`. E.g.,
 
 ```js
 app.model({
@@ -95,7 +93,7 @@ app.model({
 });
 ```
 
-If we are using antd, the most simple error handle would be like this:
+If we are using [antd](http://ant.design/), the most simple error handle would be like this:
 
 ```js
 import { message } from 'antd';
@@ -108,9 +106,9 @@ const app = dva({
 
 #### `onAction(fn | fn[])`
 
-Triggered when action is dispatched. Used for register redux middleware.
+Triggered when an action is dispatched. Useful for registering additional redux middleware.
 
-e.g. use [redux-logger](https://github.com/evgenyrodionov/redux-logger) to log actions:
+E.g., to log actions with [redux-logger](https://github.com/evgenyrodionov/redux-logger):
 
 ```js
 import createLogger from 'redux-logger';
@@ -121,13 +119,13 @@ const app = dva({
 
 #### `onStateChange(fn)`
 
-Triggered when `state` changes. Used for sync `state` to localStorage or server and so on.
+Triggered when `state` changes. Useful for syncing `state` to localStorage, server, etc.
 
 #### `onReducer(fn)`
 
-Wrap reducer execute.
+Wrap execution of reducers
 
-e.g. use [redux-undo](https://github.com/omnidan/redux-undo) to implement redo/undo:
+E.g. to implement redo/undo using [redux-undo](https://github.com/omnidan/redux-undo) :
 
 ```js
 import undoable from 'redux-undo';
@@ -136,30 +134,30 @@ const app = dva({
     return (state, action) => {
       const undoOpts = {};
       const newState = undoable(reducer, undoOpts)(state, action);
-      // 由于 dva 同步了 routing 数据，所以需要把这部分还原
+      // restore `routing` because dva syncs routing data via `react-router-redux`
       return { ...newState, routing: newState.present.routing };
     },
   },
 });
 ```
 
-View [examples/count-undo](https://github.com/dvajs/dva/blob/master/examples/count-undo/index.js) for details.
+View [examples/count-undo](https://github.com/dvajs/dva/blob/master/examples/count-undo/index.js) for more details.
 
 #### `onEffect(fn)`
 
-Wrap effect execute.
+Wrap execution of effects
 
-e.g. [dva-loading](https://github.com/dvajs/dva-loading) has implement auto loading state with this hook.
+E.g. [dva-loading](https://github.com/dvajs/dva-loading) has implemented auto loading states with this hook.
 
 #### `onHmr(fn)`
 
-HMR(Hot Module Replacement) related, currently used in [babel-plugin-dva-hmr](https://github.com/dvajs/babel-plugin-dva-hmr).
+Related to HMR (Hot Module Replacement), currently used in [babel-plugin-dva-hmr](https://github.com/dvajs/babel-plugin-dva-hmr).
 
 #### `extraReducers`
 
-Specify extra reducers.
+Adds extra reducers to the redux store.
 
-e.g. [redux-form](https://github.com/erikras/redux-form) needs extra `form` reducer:
+E.g., the library [redux-form](https://github.com/erikras/redux-form) needs an extra `form` reducer:
 
 ```js
 import { reducer as formReducer } from 'redux-form'
@@ -172,9 +170,9 @@ const app = dva({
 
 #### `extraEnhancers`
 
-Specify extra [StoreEnhancer](https://github.com/reactjs/redux/blob/master/docs/Glossary.md#store-enhancer)s.
+Adds an extra [StoreEnhancer](https://github.com/reactjs/redux/blob/master/docs/Glossary.md#store-enhancer)s.
 
-e.g. use dva with [redux-persist](https://github.com/rt2zz/redux-persist):
+E.g. to use dva with [redux-persist](https://github.com/rt2zz/redux-persist):
 
 ```js
 import { persistStore, autoRehydrate } from 'redux-persist';
@@ -186,17 +184,17 @@ persistStore(app._store);
 
 ### `app.model(model)`
 
-Register model, view [#Model](#model)  for details.
+Registers a model, see [#Model](#model) for details.
 
 ### `app.unmodel(namespace)`
 
-Unregister model.
+Unregisters a model.
 
-### `app.router(({ history, app } => RouterConfig)`
+### `app.router(({ history, app }) => <RouterConfig history={history} />)`
 
-Register router config.
+Registers a router configuration.
 
-e.g.
+E.g.,
 
 ```js
 import { Router, Route } from 'dva/router';
@@ -209,13 +207,13 @@ app.router(({ history }) => {
 });
 ```
 
-Recommend using seperate file to config router. Then we can do hmr with [babel-plugin-dva-hmr](https://github.com/dvajs/babel-plugin-dva-hmr). e.g.
+It is recommended to use a seperate file to configure the router. Then, it is possible to do hmr with [babel-plugin-dva-hmr](https://github.com/dvajs/babel-plugin-dva-hmr). E.g.,
 
 ```js
 app.router(require('./router'));
 ```
 
-Besides, if don't need router, like multiple-page application, react-native, we can pass in a function which return JSX Element. e.g.
+If the app doesn't require a router, like a react-native or multiple-page application, we can pass in a function that simply returns the root JSX Element. E.g.,
 
 ```js
 app.router(() => <App />);
@@ -223,7 +221,9 @@ app.router(() => <App />);
 
 ### `app.start(selector?)`
 
-Start application. `selector` is optionally, if no `selector`, it will return a function which return JSX element.
+Start application. `selector` is optional. 
+
+If there is no `selector`, it will return a higher-order component (HOC), i.e., a function which return JSX element.
 
 ```js
 app.start('#root');
@@ -233,15 +233,15 @@ e.g. implement i18n with react-intl:
 
 ```js
 import { IntlProvider } from 'react-intl';
-...
+//...
 const App = app.start();
 ReactDOM.render(<IntlProvider><App /></IntlProvider>, htmlElement);
 ```
 
 ## Model
-model is the most important concept in dva.
+model is the most important concept to grasp in dva.
 
-e.g.
+E.g.
 
 ```js
 app.model({
