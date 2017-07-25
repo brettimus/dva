@@ -2,14 +2,14 @@
 
 [以中文版查看此文](./API_zh-CN.md)
 
-## Export Files
+## Exported Modules
 ### dva
 
 Default export. A factory function for creating dva apps.
 
 ### dva/mobile
 
-`dva/mobile` is dva without the router, which should be used in multiple-page or react-native apps.
+`dva/mobile` is `dva` without the router, which should be used in multiple-page or react-native apps.
 
 ### dva/router
 
@@ -29,7 +29,9 @@ Exports the api of [isomorphic-fetch](https://github.com/matthew-andrews/isomorp
 
 Exports the api of [redux-saga](https://github.com/yelouafi/redux-saga).
 
-## dva API
+***
+
+## The dva API
 ### `app = dva(opts)`
 
 Create an app and return dva instance. (Note: dva supports multiple instances.)
@@ -77,11 +79,11 @@ import createLoading from 'dva-loading';
 app.use(createLoading(opts));
 ```
 
-`hooks` includes:
+**Possible `hooks` include the following** :
 
 #### `onError(fn, dispatch)`
 
-Triggered when `effect` has error or `subscription` throw error with `done`. Useful for capturing and handling unhandled errors from effects, though note for subscription`s, errors must be thrown with the send argument `done`. E.g.,
+Triggered when an `effect` throws an unhandled error or a `subscription` passes an error to its `done` callback. Useful for capturing and handling unhandled errors from effects, though note that for subscriptions, errors must be explicitly passed as an argument to `done`. E.g.,
 
 ```js
 app.model({
@@ -93,13 +95,14 @@ app.model({
 });
 ```
 
-If we are using [antd](http://ant.design/), the most simple error handle would be like this:
+If the app were to use the component library [antd](http://ant.design/), a simple global error handler for uncaught exceptions might look like this:
 
 ```js
 import { message } from 'antd';
 const app = dva({
   onError(e) {
-    message.error(e.message, /* duration */3);
+    const duration = 3;
+    message.error(e.message, duration);
   },
 });
 ```
@@ -172,7 +175,7 @@ const app = dva({
 
 Adds an extra [StoreEnhancer](https://github.com/reactjs/redux/blob/master/docs/Glossary.md#store-enhancer)s.
 
-E.g. to use dva with [redux-persist](https://github.com/rt2zz/redux-persist):
+E.g., to use dva with [redux-persist](https://github.com/rt2zz/redux-persist):
 
 ```js
 import { persistStore, autoRehydrate } from 'redux-persist';
@@ -184,11 +187,11 @@ persistStore(app._store);
 
 ### `app.model(model)`
 
-Registers a model, see [#Model](#model) for details.
+Registers a model, see [#Model](#model) for more info on models.
 
 ### `app.unmodel(namespace)`
 
-Unregisters a model.
+Unregisters a model, see [#Model](#model) for more info on models.
 
 ### `app.router(({ history, app }) => <RouterConfig history={history} />)`
 
@@ -196,7 +199,7 @@ Registers a router configuration.
 
 E.g.,
 
-```js
+```jsx
 import { Router, Route } from 'dva/router';
 app.router(({ history }) => {
   return (
@@ -207,36 +210,38 @@ app.router(({ history }) => {
 });
 ```
 
-It is recommended to use a seperate file to configure the router. Then, it is possible to do hmr with [babel-plugin-dva-hmr](https://github.com/dvajs/babel-plugin-dva-hmr). E.g.,
+It is recommended to use a separate file to configure the router. Then, it is possible to do hmr with [babel-plugin-dva-hmr](https://github.com/dvajs/babel-plugin-dva-hmr). E.g.,
 
 ```js
 app.router(require('./router'));
 ```
 
-If the app doesn't require a router, like a react-native or multiple-page application, we can pass in a function that simply returns the root JSX Element. E.g.,
+If the app doesn't require a router, like a react-native or multiple-page application, pass in a function that simply returns the root JSX Element. E.g.,
 
-```js
+```jsx
 app.router(() => <App />);
 ```
 
 ### `app.start(selector?)`
 
-Start application. `selector` is optional. 
-
-If there is no `selector`, it will return a higher-order component (HOC), i.e., a function which return JSX element.
+Starts the application, mounting to the DOM element that first matches `selector`. 
 
 ```js
 app.start('#root');
 ```
 
-e.g. implement i18n with react-intl:
+`selector` is optional, however, and if there is no `selector`, `app.start` will return a higher-order component (HOC), i.e., a function which returns JSX element.
 
-```js
+This is useful, for example, to implement internationalization with react-intl:
+
+```jsx
 import { IntlProvider } from 'react-intl';
 //...
 const App = app.start();
 ReactDOM.render(<IntlProvider><App /></IntlProvider>, htmlElement);
 ```
+
+***
 
 ## Model
 model is the most important concept to grasp in dva.
