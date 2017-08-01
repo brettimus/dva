@@ -124,6 +124,14 @@ const app = dva({
 
 Triggered when `state` changes. Useful for syncing `state` to localStorage, server, etc.
 
+This function does not take any arguments. To access state, you'll have to rely on external reference to your app. E.g.,
+
+```js
+const app = dva({
+  onStateChange: () => localStorage.setItem("state", JSON.stringify(app._store.getState()))
+});
+```
+
 #### `onReducer(fn)`
 
 Wrap execution of reducers
