@@ -114,7 +114,7 @@ Triggered when an action is dispatched. Useful for registering additional redux 
 E.g., to log actions with [redux-logger](https://github.com/evgenyrodionov/redux-logger):
 
 ```js
-import createLogger from 'redux-logger';
+import { createLogger } from 'redux-logger';
 const app = dva({
   onAction: createLogger(opts),
 });
